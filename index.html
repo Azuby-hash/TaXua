@@ -42,6 +42,7 @@ h2{font-size:22px;margin:22px 0 10px}h3{margin:6px 0}
 .b.hm{background:var(--soft);font-weight:600}
 [data-sp]{cursor:pointer}[data-sp]:hover>b{text-decoration:underline}.sphint{font-size:12px;color:var(--accent);white-space:nowrap}[data-sp].open .sphint{font-weight:700}
 .spall{margin-top:6px}
+.gwrap{margin:6px 0}.gwrap>.grid{margin-top:4px}.gwrap.closed>.grid{display:none}.gtog{border:1px solid var(--line);background:var(--panel,transparent);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:12px;cursor:pointer}.gtog:hover{border-color:var(--accent)}
 #p-thoanh .cards{grid-template-columns:minmax(0,1fr)}.card.pg{min-width:0;overflow-wrap:anywhere}
 .ev{background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0}.ev ul{margin:4px 0 2px 18px;padding:0}.ev li{font-size:13px;margin:4px 0}.lane li .spall .grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;margin:8px 0}
@@ -181,14 +182,15 @@ const fmtTel=p=>p?p.replace(/(\d{4})(\d{3})(\d+)/,'$1 $2 $3'):'';
 const star=(s,r)=>s?`<span class="b">★ ${String(s).replace('.',',')}${r?` · ${Number(r).toLocaleString('vi-VN')} đánh giá`:''}</span>`:'';
 /* ---------- lightbox ---------- */
 let LB=[],LI=0;
-function grid(imgs,limit=12,cls=''){if(!imgs||!imgs.length)return'';limit=Infinity;const id='g'+Math.random().toString(36).slice(2,8);
+function grid(imgs,limit=12,cls='',tog=''){if(!imgs||!imgs.length)return'';limit=Infinity;const id='g'+Math.random().toString(36).slice(2,8);
  const html=imgs.map((p,i)=>`<img loading="lazy" src="${U(p)}" data-g="${id}" data-i="${i}" alt="${esc((D.caps[p]||{}).t||'')}" ${i>=limit?'hidden':''}>`).join('');
  window['G_'+id]=imgs;
- return `<div class="grid ${cls}">${html}${imgs.length>limit?`<button class="more" data-more="${id}">+${imgs.length-limit} ảnh</button>`:''}</div>`;}
+ const g=`<div class="grid ${cls}">${html}${imgs.length>limit?`<button class="more" data-more="${id}">+${imgs.length-limit} ảnh</button>`:''}</div>`;
+ return !tog?g:`<div class="gwrap${tog==='closed'?' closed':''}"><button class="gtog" data-gtog="${imgs.length}">${tog==='closed'?'▸ Hiện':'▾ Ẩn'} ${imgs.length} ảnh</button>${g}</div>`;}
 const spImgs=(ids,own)=>{const a=[...(own||[])];[].concat(ids||[]).forEach(id=>{const s=D.spots.find(x=>x.id===id);if(s)(s.imgs||[]).forEach(p=>{if(!a.includes(p))a.push(p);});});return a;};
 const spAttr=(ids,own)=>{ids=[].concat(ids||[]);return ids.length?` data-sp="${ids.join(',')}" data-own="${esc((own||[]).join('|'))}" tabindex="0"`:'';};
 const spHint=(ids,own)=>{ids=[].concat(ids||[]);if(!ids.length)return '';const n=spImgs(ids,own).length;return ` <span class="sphint">📷 ${n} ảnh</span>`;};
-function spToggle(el){const box=[...el.children].find(c=>c.classList.contains('spall'));const own=[...el.children].filter(c=>c.classList.contains('grid'));
+function spToggle(el){const box=[...el.children].find(c=>c.classList.contains('spall'));const own=[...el.children].filter(c=>c.classList.contains('grid')||c.classList.contains('gwrap'));
  if(box){box.remove();own.forEach(g=>g.style.display='');el.classList.remove('open');return;}
  const imgs=spImgs(el.dataset.sp.split(','),el.dataset.own?el.dataset.own.split('|'):[]);const d=document.createElement('div');d.className='spall';
  d.innerHTML=`<div class="small muted">Toàn bộ ${imgs.length} ảnh · bấm lại tên điểm để ẩn</div>${grid(imgs)}`;own.forEach(g=>g.style.display='none');el.appendChild(d);el.classList.add('open');}
@@ -196,6 +198,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.
 document.addEventListener('click',e=>{const t=e.target;
  {const el=t.closest&&t.closest('[data-sp]');if(el&&!(t.dataset&&t.dataset.g)&&!t.closest('a,button,.spall'))spToggle(el);}
  if(t.dataset&&t.dataset.g){LB=window['G_'+t.dataset.g];LI=+t.dataset.i;openLB();}
+ if(t.dataset&&t.dataset.gtog){const w=t.parentNode,c=w.classList.toggle('closed');t.textContent=(c?'▸ Hiện ':'▾ Ẩn ')+t.dataset.gtog+' ảnh';}
  if(t.dataset&&t.dataset.more){t.parentNode.querySelectorAll('img[hidden]').forEach(i=>i.hidden=false);t.remove();}});
 function openLB(){const p=LB[LI],c=D.caps[p]||{};$('#lb img').src=U(p);
  $('#lb .cap').innerHTML=`${esc(c.t||p.split('/').pop())}${c.d&&/^\d{4}-/.test(c.d)?' · '+esc(c.d.split('-').reverse().join('/')):''}${c.s?` · <a href="${esc(c.s)}" target="_blank" rel="noopener">${/google\.com\/maps/.test(c.s)?'xem trên Google Maps':'xem video'+(c.sec?' (giây '+esc(c.sec)+')':'')}</a>`:''}`;
@@ -349,7 +352,7 @@ const photogCard=r=>{const v=VERD[r.verdict]||VERD.thieu,l=EVL[r.evlvl||'yeu'];
  <div class="ev"><b>🔎 Dẫn chứng uy tín</b>${(r.ev&&r.ev.length)?`<ul>${r.ev.map(e=>`<li><span class="muted">${esc(e.d||'')}${e.who?' · '+esc(e.who):''}${e.g?' · '+esc(e.g):''}</span><br>“${esc(e.q)}”${e.u?` <a href="${esc(e.u)}" target="_blank" rel="noopener">xem bài ↗</a>`:''}</li>`).join('')}</ul>`:`<div class="small muted">Chưa tìm thấy bài khách review cụ thể – chỉ có bài tự đăng của thợ.</div>`}
  ${(r.src||[]).length?`<div class="small muted">Nguồn đã đọc: ${r.src.map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(' · ')}</div>`:''}</div>
  ${r.price?`<div class="small">💰 ${md(r.price)}</div>`:''}${r.what?`<div class="small">📸 ${md(r.what)}</div>`:''}${r.bad?`<div class="small" style="color:var(--warn)">⚠️ ${md(r.bad)}</div>`:''}
- ${extHTML(r)}${(r.imgs||[]).length?`<div class="small muted" style="margin-top:6px">Ảnh của thợ (${r.imgs.length}):</div>${grid(r.imgs,12)}`:'<div class="small muted">Chưa lấy được ảnh.</div>'}</div>`;};
+ ${extHTML(r)}${(r.imgs||[]).length?`<div class="small muted" style="margin-top:6px">📷 Ảnh của thợ:</div>${grid(r.imgs,12,'','closed')}`:'<div class="small muted">Chưa lấy được ảnh.</div>'}</div>`;};
 sec('thoanh','📸 Thợ chụp ảnh',()=>{const P=D.rent.items.filter(isPhotog).sort((a,b)=>({manh:0,vua:1,yeu:2}[a.evlvl||'yeu']-{manh:0,vua:1,yeu:2}[b.evlvl||'yeu'])||(b.score||0)-(a.score||0));
  return `<h2>Thợ chụp ảnh ở Tà Xùa (${P.length})</h2>
  <p class="lead">Chỉ người chụp/quay – không gồm tiệm thuê đồ, chỗ thuê máy, công ty tour. ${esc(D.photog_note||'')} Xếp theo độ mạnh của dẫn chứng rồi điểm. Mỗi thợ có trích nguyên văn lời khách kèm link bài để tự kiểm.</p>
