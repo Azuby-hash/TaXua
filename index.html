@@ -198,8 +198,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.
 document.addEventListener('click',e=>{const t=e.target;
  {const el=t.closest&&t.closest('[data-sp]');if(el&&!(t.dataset&&t.dataset.g)&&!t.closest('a,button,.spall'))spToggle(el);}
  if(t.dataset&&t.dataset.g){LB=window['G_'+t.dataset.g];LI=+t.dataset.i;openLB();}
- if(t.dataset&&t.dataset.gtog){const w=t.parentNode,c=w.classList.toggle('closed');t.textContent=(c?'▸ Hiện ':'▾ Ẩn ')+t.dataset.gtog;}
+ if(t.dataset&&t.dataset.gtog){const w=t.parentNode,c=w.classList.toggle('closed');t.textContent=(c?'▸ Hiện ':'▾ Ẩn ')+t.dataset.gtog;
+  if(!c)w.querySelectorAll('img').forEach(i=>{i.loading='eager';if(i.complete&&!i.naturalWidth)imgRetry(i);});}
  if(t.dataset&&t.dataset.more){t.parentNode.querySelectorAll('img[hidden]').forEach(i=>i.hidden=false);t.remove();}});
+function imgRetry(i){const n=+(i.dataset.rt||0);if(n>=3)return;i.dataset.rt=n+1;const src=i.getAttribute('src').replace(/[?&]rt=\d+$/,'');setTimeout(()=>{i.src=src+(src.includes('?')?'&':'?')+'rt='+(n+1);},400*(n+1));}
+document.addEventListener('error',e=>{const i=e.target;if(i&&i.tagName==='IMG'&&i.closest&&i.closest('.gwrap'))imgRetry(i);},true);
 function openLB(){const p=LB[LI],c=D.caps[p]||{};$('#lb img').src=U(p);
  $('#lb .cap').innerHTML=`${esc(c.t||p.split('/').pop())}${c.d&&/^\d{4}-/.test(c.d)?' · '+esc(c.d.split('-').reverse().join('/')):''}${c.s?` · <a href="${esc(c.s)}" target="_blank" rel="noopener">${/google\.com\/maps/.test(c.s)?'xem trên Google Maps':'xem video'+(c.sec?' (giây '+esc(c.sec)+')':'')}</a>`:''}`;
  $('#lb .cnt').textContent=(LI+1)+' / '+LB.length;$('#lb').classList.add('on');}
