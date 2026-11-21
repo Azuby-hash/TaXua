@@ -42,7 +42,7 @@ h2{font-size:22px;margin:22px 0 10px}h3{margin:6px 0}
 .b.hm{background:var(--soft);font-weight:600}
 [data-sp]{cursor:pointer}[data-sp]:hover>b{text-decoration:underline}.sphint{font-size:12px;color:var(--accent);white-space:nowrap}[data-sp].open .sphint{font-weight:700}
 .spall{margin-top:6px}
-.gwrap{margin:6px 0}.gwrap>.grid{margin-top:4px}.gwrap.closed>.grid{display:none}.gtog{border:1px solid var(--line);background:var(--panel,transparent);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:12px;cursor:pointer}.gtog:hover{border-color:var(--accent)}
+.gwrap{margin:6px 0}.gwrap>.grid{margin-top:4px}.gwrap.closed>:not(.gtog){display:none}.ev.gwrap{margin:8px 0}.ev.gwrap.closed{background:none;padding:0}.ev .gtog{font-weight:600}.gtog{border:1px solid var(--line);background:var(--panel,transparent);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:12px;cursor:pointer}.gtog:hover{border-color:var(--accent)}
 #p-thoanh .cards{grid-template-columns:minmax(0,1fr)}.card.pg{min-width:0;overflow-wrap:anywhere}
 .ev{background:var(--soft);border-radius:10px;padding:8px 10px;margin:8px 0}.ev ul{margin:4px 0 2px 18px;padding:0}.ev li{font-size:13px;margin:4px 0}.lane li .spall .grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;margin:8px 0}
@@ -186,7 +186,7 @@ function grid(imgs,limit=12,cls='',tog=''){if(!imgs||!imgs.length)return'';limit
  const html=imgs.map((p,i)=>`<img loading="lazy" src="${U(p)}" data-g="${id}" data-i="${i}" alt="${esc((D.caps[p]||{}).t||'')}" ${i>=limit?'hidden':''}>`).join('');
  window['G_'+id]=imgs;
  const g=`<div class="grid ${cls}">${html}${imgs.length>limit?`<button class="more" data-more="${id}">+${imgs.length-limit} ảnh</button>`:''}</div>`;
- return !tog?g:`<div class="gwrap${tog==='closed'?' closed':''}"><button class="gtog" data-gtog="${imgs.length}">${tog==='closed'?'▸ Hiện':'▾ Ẩn'} ${imgs.length} ảnh</button>${g}</div>`;}
+ return !tog?g:`<div class="gwrap${tog==='closed'?' closed':''}"><button class="gtog" data-gtog="${imgs.length} ảnh">${tog==='closed'?'▸ Hiện':'▾ Ẩn'} ${imgs.length} ảnh</button>${g}</div>`;}
 const spImgs=(ids,own)=>{const a=[...(own||[])];[].concat(ids||[]).forEach(id=>{const s=D.spots.find(x=>x.id===id);if(s)(s.imgs||[]).forEach(p=>{if(!a.includes(p))a.push(p);});});return a;};
 const spAttr=(ids,own)=>{ids=[].concat(ids||[]);return ids.length?` data-sp="${ids.join(',')}" data-own="${esc((own||[]).join('|'))}" tabindex="0"`:'';};
 const spHint=(ids,own)=>{ids=[].concat(ids||[]);if(!ids.length)return '';const n=spImgs(ids,own).length;return ` <span class="sphint">📷 ${n} ảnh</span>`;};
@@ -198,7 +198,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.
 document.addEventListener('click',e=>{const t=e.target;
  {const el=t.closest&&t.closest('[data-sp]');if(el&&!(t.dataset&&t.dataset.g)&&!t.closest('a,button,.spall'))spToggle(el);}
  if(t.dataset&&t.dataset.g){LB=window['G_'+t.dataset.g];LI=+t.dataset.i;openLB();}
- if(t.dataset&&t.dataset.gtog){const w=t.parentNode,c=w.classList.toggle('closed');t.textContent=(c?'▸ Hiện ':'▾ Ẩn ')+t.dataset.gtog+' ảnh';}
+ if(t.dataset&&t.dataset.gtog){const w=t.parentNode,c=w.classList.toggle('closed');t.textContent=(c?'▸ Hiện ':'▾ Ẩn ')+t.dataset.gtog;}
  if(t.dataset&&t.dataset.more){t.parentNode.querySelectorAll('img[hidden]').forEach(i=>i.hidden=false);t.remove();}});
 function openLB(){const p=LB[LI],c=D.caps[p]||{};$('#lb img').src=U(p);
  $('#lb .cap').innerHTML=`${esc(c.t||p.split('/').pop())}${c.d&&/^\d{4}-/.test(c.d)?' · '+esc(c.d.split('-').reverse().join('/')):''}${c.s?` · <a href="${esc(c.s)}" target="_blank" rel="noopener">${/google\.com\/maps/.test(c.s)?'xem trên Google Maps':'xem video'+(c.sec?' (giây '+esc(c.sec)+')':'')}</a>`:''}`;
@@ -349,8 +349,8 @@ const photogCard=r=>{const v=VERD[r.verdict]||VERD.thieu,l=EVL[r.evlvl||'yeu'];
  return `<div class="card pg"><h3>${esc(r.name)} <span class="b" style="border-color:${v[1]};color:${v[1]}">${v[0]}${r.score?` · ${r.score}/10`:''}</span></h3>
  <div class="badges"><span class="b" style="color:${l[1]}" title="${esc(l[2])}">${l[0]}</span>${r.phone?`<span class="b">📞 <a class="tel" href="tel:${r.phone}">${fmtTel(r.phone)}</a></span>`:''}${r.where?`<span class="b">📍 ${esc(r.where)}</span>`:''}${r.date?`<span class="b">🗓️ kiểm ${esc(r.date)}</span>`:''}</div>
  ${r.why?`<div class="small"><b>Tóm tắt:</b> ${md(r.why)}</div>`:''}
- <div class="ev"><b>🔎 Dẫn chứng uy tín</b>${(r.ev&&r.ev.length)?`<ul>${r.ev.map(e=>`<li><span class="muted">${esc(e.d||'')}${e.who?' · '+esc(e.who):''}${e.g?' · '+esc(e.g):''}</span><br>“${esc(e.q)}”${e.u?` <a href="${esc(e.u)}" target="_blank" rel="noopener">xem bài ↗</a>`:''}</li>`).join('')}</ul>`:`<div class="small muted">Chưa tìm thấy bài khách review cụ thể – chỉ có bài tự đăng của thợ.</div>`}
- ${(r.src||[]).length?`<div class="small muted">Nguồn đã đọc: ${r.src.map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(' · ')}</div>`:''}</div>
+ <div class="ev gwrap closed"><button class="gtog" data-gtog="🔎 dẫn chứng uy tín (${(r.ev||[]).length})">▸ Hiện 🔎 dẫn chứng uy tín (${(r.ev||[]).length})</button><div>${(r.ev&&r.ev.length)?`<ul>${r.ev.map(e=>`<li><span class="muted">${esc(e.d||'')}${e.who?' · '+esc(e.who):''}${e.g?' · '+esc(e.g):''}</span><br>“${esc(e.q)}”${e.u?` <a href="${esc(e.u)}" target="_blank" rel="noopener">xem bài ↗</a>`:''}</li>`).join('')}</ul>`:`<div class="small muted">Chưa tìm thấy bài khách review cụ thể – chỉ có bài tự đăng của thợ.</div>`}
+ ${(r.src||[]).length?`<div class="small muted">Nguồn đã đọc: ${r.src.map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(' · ')}</div>`:''}</div></div>
  ${r.price?`<div class="small">💰 ${md(r.price)}</div>`:''}${r.what?`<div class="small">📸 ${md(r.what)}</div>`:''}${r.bad?`<div class="small" style="color:var(--warn)">⚠️ ${md(r.bad)}</div>`:''}
  ${extHTML(r)}${(r.imgs||[]).length?`<div class="small muted" style="margin-top:6px">📷 Ảnh của thợ:</div>${grid(r.imgs,12,'','closed')}`:'<div class="small muted">Chưa lấy được ảnh.</div>'}</div>`;};
 sec('thoanh','📸 Thợ chụp ảnh',()=>{const P=D.rent.items.filter(isPhotog).sort((a,b)=>({manh:0,vua:1,yeu:2}[a.evlvl||'yeu']-{manh:0,vua:1,yeu:2}[b.evlvl||'yeu'])||(b.score||0)-(a.score||0));
